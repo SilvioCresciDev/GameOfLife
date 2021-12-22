@@ -230,6 +230,7 @@ for(int r = 1; r <= round; r++){
 
     //I processori adesso formano quella che sarà la nuova matrice temporanea su cui eseguire i calcoli
     if(me == 0){
+        printf("prova");
         localWorldTmp = malloc(cols * (local_rows+1)*sizeof(char));
         for(int i = 0; i< local_rows; i++){
             for(int j = 0; j< cols; j++){
