@@ -36,6 +36,47 @@ int get_count(char *world, int i_me, int j_me, int row, int cols){
     return count;
 }
 
+void first_next_round(int me, int nproc, char *world, int rows, int cols){
+    char *world_tmp = malloc (rows * cols * sizeof(char));
+
+    int local_count;
+    int a, b;
+    if( me == 0 ){
+        a = 0;
+        b = rows-1;
+
+    } else if( me == nproc -1){
+        a = 1;
+        b = rows;
+    } else {
+        a = 1;
+        b = rows-1;
+    }
+    for (int i=a; i<b; i++){
+        for (int j=0; j< cols; j++){
+            local_count = get_count(world,i,j,rows,cols);
+            
+            //se la cella analizzata è alive
+            if(world[j + i*cols] == 'a'){
+                if(local_count < 2) world_tmp[j + i*cols] = 'd';
+                else if(local_count == 2 || local_count == 3)world_tmp[j + i*cols] = 'a';
+                else if(local_count > 3) world_tmp[j + i*cols] = 'd';
+            }//se invece la cella è dead
+            else if (world[j + i*cols] == 'd'){
+                if(local_count == 3) world_tmp[j + i*cols] = 'a';
+                else world_tmp[j + i*cols] = 'd';
+            }
+        }
+    }
+
+    for (int i=a; i<b; i++){
+        for (int j=0; j< cols; j++){
+            world[j + i*cols] = world_tmp[j + i*cols];
+        }
+    }
+    free(world_tmp); 
+}
+
 void next_round(char *world, int rows, int cols){
     
     char *world_tmp = malloc(rows * cols * sizeof(char));
@@ -136,13 +177,18 @@ if(me == 0)
             world[i * cols +j] = 'd';
         }
     } 
-
+    /*
     world[27] = 'a';
     world[34] = 'a';
     world[35] = 'a';
     world[36] = 'a';
+    */
 
+    world[1] = 'a';
+    world[9] = 'a';
+    world[17] = 'a';
 
+    printf("\nLa matrice di partenza è: \n\n");
     stampa(world, rows, cols);
 
 } // fine me==0
@@ -170,12 +216,20 @@ T_inizio=MPI_Wtime(); //inizio del cronometro per il calcolo del tempo di inizio
 // e ultima riga delle sottomatrici contenute dai processori precedente e successivo
 
 char *localWorldTmp;
+char *localNewWorld;
 char *firstRow, *lastRow, *firstRowRecv, *lastRowRecv;
 firstRow = malloc (cols * sizeof(char));
 lastRow = malloc (cols * sizeof(char));
 
 for(int r = 1; r <= round; r++){
-    //printf("me = %d\n", me);
+
+    printf("Processore %d prima \n", me);
+    stampa(localWorld, local_rows, cols);
+
+    first_next_round(me, nproc, localWorld, local_rows, cols);
+    printf("Processore %d dopo \n", me);
+    stampa(localWorld, local_rows, cols);
+    
     //Invio della prima e ultima riga ai processori vicini
     if( me == 0 ){
         lastRow = malloc (cols * sizeof(char));
@@ -183,6 +237,7 @@ for(int r = 1; r <= round; r++){
             lastRow[i] = localWorld[i + cols * (local_rows-1)];
         
         }
+
         MPI_Isend(lastRow, cols, MPI_CHAR, me+1, 0, MPI_COMM_WORLD, &request);
 
         lastRowRecv = malloc (cols * sizeof(char));
@@ -194,6 +249,7 @@ for(int r = 1; r <= round; r++){
         for(int i = 0 ; i<cols; i++){
             firstRow[i] = localWorld[i];
         }
+
         MPI_Isend(firstRow, cols, MPI_CHAR, me-1, 0, MPI_COMM_WORLD, &request);
 
         firstRowRecv = malloc (cols * sizeof(char));
@@ -216,6 +272,7 @@ for(int r = 1; r <= round; r++){
             //printf("%c",firstRow[i]);
         }
             //printf("\n");
+
         
         MPI_Isend(firstRow, cols, MPI_CHAR, me-1, 0, MPI_COMM_WORLD, &request);
         firstRowRecv = malloc (cols * sizeof(char));
