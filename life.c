@@ -74,6 +74,7 @@ void first_next_round(int me, int nproc, char *world, int rows, int cols){
             world[j + i*cols] = world_tmp[j + i*cols];
         }
     }
+
     free(world_tmp); 
 }
 
@@ -215,20 +216,15 @@ T_inizio=MPI_Wtime(); //inizio del cronometro per il calcolo del tempo di inizio
 //Ogni processore alloca una matrice temporanea dove vengono inviate anche la prima
 // e ultima riga delle sottomatrici contenute dai processori precedente e successivo
 
-char *localWorldTmp;
-char *localNewWorld;
+char *localWorldTmp, *localWorldTmpBot;
 char *firstRow, *lastRow, *firstRowRecv, *lastRowRecv;
 firstRow = malloc (cols * sizeof(char));
 lastRow = malloc (cols * sizeof(char));
 
 for(int r = 1; r <= round; r++){
-
-    printf("Processore %d prima \n", me);
-    stampa(localWorld, local_rows, cols);
-
-    first_next_round(me, nproc, localWorld, local_rows, cols);
-    printf("Processore %d dopo \n", me);
-    stampa(localWorld, local_rows, cols);
+    
+    //printf("Processore %d \n", me);
+    //stampa(localWorld, local_rows, cols);
     
     //Invio della prima e ultima riga ai processori vicini
     if( me == 0 ){
@@ -285,84 +281,139 @@ for(int r = 1; r <= round; r++){
     MPI_Wait(&request, &Stat);
     MPI_Barrier(MPI_COMM_WORLD);
 
+    //Salvo le seconde e penultime righe necessarie al calcolo
+    char *rowTopToSave = malloc (cols * sizeof(char));
+    char *rowBotToSave = malloc (cols * sizeof(char));
+    if( me == 0 ){
+        for ( int i = 0; i < cols; i++ ){
+            rowBotToSave[i] = localWorld[(local_rows-2)*cols + i];
+        }
+    }else if(me == nproc-1){
+        for(int i = 0; i < cols; i++){
+            rowTopToSave[i] = localWorld[cols + i];
+        }
+    }else{
+        for ( int i = 0; i < cols; i++ ){
+            rowBotToSave[i] = localWorld[(local_rows-2)*cols + i];
+        }
+
+        for(int i = 0; i < cols; i++){
+            rowTopToSave[i] = localWorld[cols + i];
+        }
+    }
+
+    first_next_round(me, nproc, localWorld, local_rows, cols);
+
+    //printf("Processore %d\n", me);
+    //stampa(localWorld,local_rows, cols);
+
+    localWorldTmp = malloc(cols * 3 * sizeof(char));
+
     //I processori adesso formano quella che sarà la nuova matrice temporanea su cui eseguire i calcoli
     if(me == 0){
-        localWorldTmp = malloc(cols * (local_rows+1)*sizeof(char));
-        for(int i = 0; i< local_rows; i++){
-            for(int j = 0; j< cols; j++){
-                localWorldTmp[i*cols +j] = localWorld[i*cols +j]; 
-            }
+        //stampa (localWorld, local_rows, cols);
+        
+        for(int j = 0; j< cols; j++){
+            localWorldTmp[j] = rowBotToSave[j]; 
         }
+        for(int j = 0; j< cols; j++){
+            localWorldTmp[cols + j] = localWorld[(local_rows -1) * cols + j]; 
+        }
+
         for (int i = 0 ; i< cols; i++){
-            localWorldTmp[local_rows*cols + i] = lastRowRecv[i];
+
+            localWorldTmp[2*cols + i] = lastRowRecv[i];
         }
         //printf("Processore %d, la localWorldTmp è: \n",me);
-        //stampa(localWorldTmp, local_rows +1, cols);
+        //stampa(localWorldTmp, 3, cols);
+    
     }else if(me == nproc-1){
-        localWorldTmp = malloc(cols * (local_rows+1)*sizeof(char));
+        
         for (int i = 0 ; i< cols; i++){
             localWorldTmp[i] = firstRowRecv[i];
         }
-        for(int i = 1; i <= local_rows; i++){
-            for(int j = 0; j< cols; j++){
-                localWorldTmp[i*cols +j] = localWorld[(i-1)*cols +j]; 
-            }
+        
+        for(int j = 0; j< cols; j++){
+            localWorldTmp[cols + j] = localWorld[j]; 
         }
+
+         for(int j = 0; j< cols; j++){
+            localWorldTmp[2 * cols + j] = rowTopToSave[j]; 
+        }
+        
         //printf("Processore %d, la localWorldTmp è: \n",me);
-        //stampa(localWorldTmp, local_rows +1, cols);
+        //stampa(localWorldTmp, 3, cols);
     }else{
-        localWorldTmp = malloc(cols * (local_rows+2)*sizeof(char));
+        localWorldTmpBot = malloc ( cols * 3 * sizeof(char));
+
         for (int i = 0 ; i< cols; i++){
             localWorldTmp[i] = firstRowRecv[i];
         }
-        for (int i = 0 ; i< cols; i++){
-            localWorldTmp[(local_rows+1)*cols + i] = lastRowRecv[i];
+        
+        for(int j = 0; j< cols; j++){
+            localWorldTmp[cols + j] = localWorld[j]; 
         }
-        for(int i = 1; i <= local_rows; i++){
-            for(int j = 0; j< cols; j++){
-                localWorldTmp[i*cols +j] = localWorld[(i-1)*cols +j]; 
-            }
+
+        for(int j = 0; j< cols; j++){
+            localWorldTmp[2 * cols + j] = rowTopToSave[j]; 
+        }
+
+        for(int j = 0; j< cols; j++){
+            localWorldTmpBot[j] = rowBotToSave[j]; 
+        }
+        for(int j = 0; j< cols; j++){
+            localWorldTmpBot[cols + j] = localWorld[(local_rows -1) * cols + j]; 
+        }
+
+        for (int i = 0 ; i< cols; i++){
+
+            localWorldTmpBot[2*cols + i] = lastRowRecv[i];
         }
         //printf("Processore %d, la localWorldTmp è: \n",me);
-        //stampa(localWorldTmp, local_rows +2, cols);
+        //stampa(localWorldTmp, 3, cols);
     }
 
     //I processori eseguono i calcoli
 
     if(me == 0 || me == nproc-1){
-        next_round(localWorldTmp, local_rows +1, cols);
+        next_round(localWorldTmp, 3, cols);
     }else{
-        next_round(localWorldTmp, local_rows +2, cols);
+        next_round(localWorldTmp, 3, cols);
+        next_round(localWorldTmpBot, 3, cols);
     }
 
+    //printf("Processore %d dopo next round ho :\n", me);
+    //stampa(localWorldTmp,3,cols);
 
     //I processori ritornano alla matrice grande come quella di partenza assegnatagli, ma con i valori aggiornati
     if(me == 0){
         //printf("Processore %d, la localWorldTmp è: \n",me);
         //stampa(localWorldTmp, local_rows +1, cols);
-        for(int i = 0; i< local_rows; i++){
-            for(int j = 0; j< cols; j++){
-                localWorld[i*cols +j] = localWorldTmp[i*cols +j]; 
-            }
+    
+        for(int j = 0; j< cols; j++){
+            localWorld[(local_rows-1)*cols +j] = localWorldTmp[cols +j]; 
         }
 
     }else if(me == nproc-1){
         //printf("Processore %d, la localWorldTmp è: \n",me);
         //stampa(localWorldTmp, local_rows +1, cols);
-        for(int i = 1; i <= local_rows; i++){
-            for(int j = 0; j< cols; j++){
-                localWorld[(i-1)*cols +j] = localWorldTmp[i*cols +j]; 
-            }
+
+        for(int j = 0; j< cols; j++){
+            localWorld[j] = localWorldTmp[cols +j]; 
         }
+        
         
     }else{
         //printf("Processore %d, la localWorldTmp è: \n",me);
         //stampa(localWorldTmp, local_rows +2, cols);
-        for(int i = 1; i <= local_rows; i++){
-            for(int j = 0; j< cols; j++){
-                localWorld[(i-1)*cols +j] = localWorldTmp[i*cols +j]; 
-            }
+        
+        for(int j = 0; j< cols; j++){
+            localWorld[j] = localWorldTmp[cols +j]; 
         }
+        for(int j = 0; j< cols; j++){
+            localWorld[(local_rows-1)*cols +j] = localWorldTmpBot[cols +j]; 
+        }
+        
     }
 
     // 0 raccoglie i risultati parziali
@@ -370,13 +421,12 @@ for(int r = 1; r <= round; r++){
 
    
     if(me == 0){
+        printf("ANNO %d: \n\n",r);
         stampa (world, rows, cols);
     }
 }
 
 T_fine=MPI_Wtime()-T_inizio; // calcolo del tempo di fine
-
-printf("Processore %d", me);
 
 if(me==0){
 
