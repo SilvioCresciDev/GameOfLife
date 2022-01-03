@@ -2,6 +2,25 @@
 #include <stdlib.h>
 #include <mpi.h> 
 
+void seed_linea(char *world, int row, int cols, int start_rows, int start_cols){
+    
+    for(int i=start_cols; i<start_cols+3; i++){
+    world[i + start_rows * cols] = 'a';
+    }
+}
+
+void seed_glider(char *world, int row, int cols, int start_rows, int start_cols){
+    world[start_cols + start_rows * cols] = 'a';
+    world[ 1 + start_cols + (start_rows+1) * cols] = 'a';
+    seed_linea(world, row, cols, start_rows+2, start_cols-1);
+
+}
+
+void seed_forma(char *world, int row, int cols, int start_rows, int start_cols){
+    world[start_cols + start_rows * cols] = 'a';
+    seed_linea(world, row, cols, start_rows+1, start_cols-1);
+}
+
 void stampa(char *world, int rows, int cols){
     for (int i=0; i<rows; i++){
         
@@ -178,17 +197,10 @@ if(me == 0)
             world[i * cols +j] = 'd';
         }
     } 
-    /*
-    world[27] = 'a';
-    world[34] = 'a';
-    world[35] = 'a';
-    world[36] = 'a';
-    */
 
-    world[1] = 'a';
-    world[9] = 'a';
-    world[17] = 'a';
-
+   //seed_linea(world, rows, cols, 1, 1);
+    //seed_glider(world, rows, cols, 1, 1);
+    seed_forma(world, rows, cols, 3, 3);
     printf("\nLa matrice di partenza è: \n\n");
     stampa(world, rows, cols);
 
