@@ -149,6 +149,9 @@ MPI_Comm comm2D, commrow;
 
 MPI_Request request = MPI_REQUEST_NULL;
 
+int *displ = malloc (nproc * sizeof(int));
+int *sendcount = malloc(nproc * sizeof(int));
+
 
 /*Attiva MPI*/
 MPI_Init(&argc, &argv);
@@ -187,7 +190,25 @@ if(me == 0)
     scanf("%d",&round);
 
     // Numero di righe da processare
-    local_rows = rows/nproc;  
+    local_rows = rows/nproc;
+    int resto = rows%nproc;
+
+   
+    int dist = 0;
+    
+    for(int i = 0; i < nproc; i++){
+        sendcount[i] = local_rows * cols;
+        displ[i] = dist; 
+
+        if(resto != 0){
+            sendcount[i] += cols;
+
+            resto-- ;
+        }
+
+        dist += sendcount[i];
+    }
+
     
     // Alloco spazio di memoria
     world = malloc(rows * cols * sizeof(char));
@@ -200,26 +221,29 @@ if(me == 0)
 
    //seed_linea(world, rows, cols, 1, 1);
     //seed_glider(world, rows, cols, 1, 1);
-    seed_forma(world, rows, cols, 3, 3);
+    seed_forma(world, rows, cols, 5, 3);
     printf("\nLa matrice di partenza è: \n\n");
     stampa(world, rows, cols);
 
 } // fine me==0
 
+
+MPI_Scatter(sendcount, 1, MPI_INT, &local_rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
 // Spedisco m, n, local_m e v
 MPI_Bcast(&rows,1,MPI_INT,0,MPI_COMM_WORLD);  
 MPI_Bcast(&cols,1,MPI_INT,0,MPI_COMM_WORLD);            
-MPI_Bcast(&local_rows,1,MPI_INT,0,MPI_COMM_WORLD);
 MPI_Bcast(&round,1,MPI_INT,0,MPI_COMM_WORLD);
 
+local_rows /= cols;
 
 // tutti allocano A locale e il vettore dei risultati
 localWorld = malloc(local_rows * cols * sizeof(char));
 
 // Adesso 0 invia a tutti un pezzo della matrice
-MPI_Scatter(
-    &world[0], local_rows*cols, MPI_CHAR,
-    &localWorld[0], local_rows*cols, MPI_CHAR,
+MPI_Scatterv(
+    world, sendcount, displ, MPI_CHAR,
+    localWorld, local_rows*cols, MPI_CHAR,
     0, MPI_COMM_WORLD);
 
 MPI_Barrier(MPI_COMM_WORLD);
@@ -429,8 +453,7 @@ for(int r = 1; r <= round; r++){
     }
 
     // 0 raccoglie i risultati parziali
-    MPI_Gather(localWorld, local_rows * cols, MPI_CHAR,&world[0],local_rows * cols,MPI_CHAR,0,MPI_COMM_WORLD);
-
+    MPI_Gatherv(localWorld, local_rows * cols, MPI_CHAR, world, sendcount, displ, MPI_CHAR,0,MPI_COMM_WORLD);
    
     if(me == 0){
         printf("ANNO %d: \n\n",r);
