@@ -192,7 +192,6 @@ if(me == 0)
     // Numero di righe da processare
     local_rows = rows/nproc;
     int resto = rows%nproc;
-
    
     int dist = 0;
     
@@ -208,7 +207,6 @@ if(me == 0)
 
         dist += sendcount[i];
     }
-
     
     // Alloco spazio di memoria
     world = malloc(rows * cols * sizeof(char));
@@ -219,15 +217,30 @@ if(me == 0)
         }
     } 
 
-   //seed_linea(world, rows, cols, 1, 1);
+    seed_linea(world, rows, cols, 1, 1);
     //seed_glider(world, rows, cols, 1, 1);
-    seed_forma(world, rows, cols, 5, 3);
+    //seed_forma(world, rows, cols, 5, 3);
     printf("\nLa matrice di partenza è: \n\n");
     stampa(world, rows, cols);
 
+    
+
 } // fine me==0
 
+//Sequenziale se dividendo la matrice di input non si hanno almeno due righe per processore
+    if (local_rows < nproc * 2){
+        if(me==0){
+        for(int i = 0; i < round; i++){
+            next_round(world, rows, cols);
+        }
+        printf("La matrice risultante al round %d è:\n\n", round);
+        stampa(world,rows,cols);
+        }
+        MPI_Finalize (); /* Disattiva MPI */
+        return 0;
+    }
 
+//Il processore 0 comunica il numero di righe che ogni processore avrà
 MPI_Scatter(sendcount, 1, MPI_INT, &local_rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 // Spedisco m, n, local_m e v
