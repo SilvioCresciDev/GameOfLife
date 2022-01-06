@@ -177,7 +177,7 @@ MPI_Cart_coords(commrow, colID, 1, coords1D);
 /* la barrier assicura che tutti conoscano le proprie coordinate prima di assegnare aij*/
 MPI_Barrier(MPI_COMM_WORLD); 
 
-// Se sono a radice
+// Se sono la radice
 if(me == 0)
 {
     printf("inserire numero di righe = \n"); 
@@ -243,7 +243,7 @@ MPI_Bcast(&round,1,MPI_INT,0,MPI_COMM_WORLD);
         printf("La matrice risultante al round %d è:\n\n", round);
         stampa(world,rows,cols);
         }
-        printf("ce stong");
+       
         MPI_Finalize (); // Disattiva MPI 
         return 0;
     }
@@ -272,13 +272,13 @@ char *rowTopToSave, *rowBotToSave;
 localWorldTmp = malloc(cols * 3 * sizeof(char));
 
 if(me != 0){
-    lastRow = malloc (cols * sizeof(char));
+    firstRow = malloc (cols * sizeof(char));
     firstRowRecv = malloc (cols * sizeof(char));
     rowTopToSave = malloc (cols * sizeof(char));
     }
 
 if(me != nproc-1) {    
-    firstRow = malloc (cols * sizeof(char));
+    lastRow = malloc (cols * sizeof(char));
     lastRowRecv = malloc (cols * sizeof(char));
     rowBotToSave = malloc (cols * sizeof(char));
 }
@@ -293,7 +293,7 @@ for(int r = 1; r <= round; r++){
     
     //Invio della prima e ultima riga ai processori vicini
     if( me == 0 ){
-
+         printf("ce stong");
         for(int i = 0 ; i<cols; i++){
             lastRow[i] = localWorld[i + cols * (local_rows-1)];
         }
@@ -474,14 +474,16 @@ free(localWorldTmp);
 free(localWorld);
 
 if(me != 0){
+    free(firstRow);
     free(firstRowRecv);
     free(rowTopToSave);
-    free(lastRow);
+    
 }
 if(me != nproc-1) {    
+    free(lastRow);
     free(lastRowRecv);
     free(rowBotToSave);
-    free(firstRow);
+    
 }
 if (me != 0 && me != nproc-1){
     free(localWorldTmpBot);
