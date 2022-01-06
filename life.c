@@ -293,7 +293,6 @@ for(int r = 1; r <= round; r++){
     
     //Invio della prima e ultima riga ai processori vicini
     if( me == 0 ){
-         printf("ce stong");
         for(int i = 0 ; i<cols; i++){
             lastRow[i] = localWorld[i + cols * (local_rows-1)];
         }
