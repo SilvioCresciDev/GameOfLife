@@ -145,9 +145,12 @@ int id2D, colID, ndim=2;
 int coords1D[1], coords2D[2], dims[2], aij, alocal[3];  
 int belongs[2], periods[2], reorder;
 MPI_Comm comm2D, commrow;
- MPI_Status Stat;
+ MPI_Status Stat[8];
 
-MPI_Request request = MPI_REQUEST_NULL;
+MPI_Request request[8];
+for(int i = 0; i< 8; i++){
+    request[i] = MPI_REQUEST_NULL;
+}
 
 int *displ = malloc (nproc * sizeof(int));
 int *sendcount = malloc(nproc * sizeof(int));
@@ -217,9 +220,9 @@ if(me == 0)
         }
     } 
 
-    seed_linea(world, rows, cols, 1, 1);
+    //seed_linea(world, rows, cols, 1, 1);
     //seed_glider(world, rows, cols, 1, 1);
-    //seed_forma(world, rows, cols, 5, 3);
+    seed_forma(world, rows, cols, 3, 3);
     if(rows <= 20 && cols <=20){
     printf("\nLa matrice di partenza è: \n\n");
     stampa(world, rows, cols);
@@ -290,16 +293,16 @@ if (me != 0 && me != nproc-1){
 
 //Inizio del ciclo per di comunicazione e computazione necessaria ad eseguire ogni round
 for(int r = 1; r <= round; r++){
-    
+    int count = 0;
     //Invio della prima e ultima riga ai processori vicini
     if( me == 0 ){
         for(int i = 0 ; i<cols; i++){
             lastRow[i] = localWorld[i + cols * (local_rows-1)];
         }
 
-        MPI_Isend(lastRow, cols, MPI_CHAR, me+1, 0, MPI_COMM_WORLD, &request);
+        MPI_Isend(lastRow, cols, MPI_CHAR, me+1, 0, MPI_COMM_WORLD, &request[count++]);
 
-        MPI_Irecv(lastRowRecv,cols, MPI_CHAR, me+1, 0, MPI_COMM_WORLD, &request);
+        MPI_Irecv(lastRowRecv,cols, MPI_CHAR, me+1, 0, MPI_COMM_WORLD, &request[count++]);
    
     }else if( me == nproc-1){
 
@@ -307,9 +310,9 @@ for(int r = 1; r <= round; r++){
             firstRow[i] = localWorld[i];
         }
 
-        MPI_Isend(firstRow, cols, MPI_CHAR, me-1, 0, MPI_COMM_WORLD, &request);
+        MPI_Isend(firstRow, cols, MPI_CHAR, me-1, 0, MPI_COMM_WORLD, &request[count++]);
 
-        MPI_Irecv(firstRowRecv,cols, MPI_CHAR, me-1, 0, MPI_COMM_WORLD,&request);
+        MPI_Irecv(firstRowRecv,cols, MPI_CHAR, me-1, 0, MPI_COMM_WORLD,&request[count++]);
 
     }else{
 
@@ -321,16 +324,19 @@ for(int r = 1; r <= round; r++){
             firstRow[i] = localWorld[i];
         }
 
-        MPI_Isend(firstRow, cols, MPI_CHAR, me-1, 0, MPI_COMM_WORLD, &request);
+        MPI_Isend(firstRow, cols, MPI_CHAR, me-1, 0, MPI_COMM_WORLD, &request[count++]);
         
-        MPI_Irecv(firstRowRecv,cols, MPI_CHAR, me-1, 0, MPI_COMM_WORLD, &request);
+        MPI_Irecv(firstRowRecv,cols, MPI_CHAR, me-1, 0, MPI_COMM_WORLD, &request[count++]);
+        
 
-        MPI_Isend(lastRow, cols, MPI_CHAR, me+1, 0, MPI_COMM_WORLD, &request);
+        MPI_Isend(lastRow, cols, MPI_CHAR, me+1, 0, MPI_COMM_WORLD, &request[count++]);
        
-        MPI_Irecv(lastRowRecv,cols, MPI_CHAR, me+1, 0, MPI_COMM_WORLD, &request);
+        MPI_Irecv(lastRowRecv,cols, MPI_CHAR, me+1, 0, MPI_COMM_WORLD, &request[count++]);
+        
     }
-    MPI_Wait(&request, &Stat);
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Waitall(count, request, Stat);
+    
+    //MPI_Barrier(MPI_COMM_WORLD);
 
     //Salvo le seconde e penultime righe necessarie al calcolo
     
@@ -453,11 +459,11 @@ for(int r = 1; r <= round; r++){
     // 0 raccoglie i risultati parziali
     MPI_Gatherv(localWorld, local_rows * cols, MPI_CHAR, world, sendcount, displ, MPI_CHAR,0,MPI_COMM_WORLD);
 
-    /*if(me == 0){
+    if(me == 0){
         printf("ANNO %d: \n\n",r);
         stampa (world, rows, cols);
     }
-    */
+    
    
 }
 
