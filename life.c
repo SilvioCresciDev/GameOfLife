@@ -455,17 +455,21 @@ for(int r = 1; r <= round; r++){
         }
         
     }
-
-    // 0 raccoglie i risultati parziali
+    //Se si vuole vedere il risultato anno per anno, attivare la seguente parte commentata.
+    /*
     MPI_Gatherv(localWorld, local_rows * cols, MPI_CHAR, world, sendcount, displ, MPI_CHAR,0,MPI_COMM_WORLD);
-
+    
     if(me == 0){
         printf("ANNO %d: \n\n",r);
         stampa (world, rows, cols);
     }
-    
-   
+   */
 }
+
+// 0 raccoglie i risultati parziali
+MPI_Gatherv(localWorld, local_rows * cols, MPI_CHAR, world, sendcount, displ, MPI_CHAR,0,MPI_COMM_WORLD);
+
+    
 
 if(me == 0){
         if(rows <= 20 && cols <=20){
