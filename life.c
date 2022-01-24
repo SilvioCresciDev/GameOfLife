@@ -229,6 +229,22 @@ if(me == 0)
     }
 } // fine me==0
 
+//Sequenziale poiché ho un solo processore a disposizione
+if(nproc == 1){
+    for(int i = 0; i < round; i++){
+        next_round(world,rows,cols);
+        //printf("La matrice al round %d è:\n\n", i+1);
+        //stampa(world,rows,cols);
+    }
+
+    printf("La matrice risultante al round %d è:\n\n", round);
+    stampa(world,rows,cols);
+    T_fine=MPI_Wtime()-T_inizio; // calcolo del tempo di fine
+    printf("\nTempo calcolo locale: %lf\n", T_fine);
+
+    MPI_Finalize (); // Disattiva MPI 
+    return 0;
+}
 //Il processore 0 comunica il numero di righe che ogni processore avrà
 MPI_Scatter(sendcount, 1, MPI_INT, &local_rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
