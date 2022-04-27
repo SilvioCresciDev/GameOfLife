@@ -231,6 +231,7 @@ if(me == 0)
 
 //Sequenziale poiché ho un solo processore a disposizione
 if(nproc == 1){
+    T_inizio=MPI_Wtime(); //inizio del cronometro per il calcolo del tempo di inizio
     for(int i = 0; i < round; i++){
         next_round(world,rows,cols);
         //printf("La matrice al round %d è:\n\n", i+1);
@@ -238,7 +239,7 @@ if(nproc == 1){
     }
 
     printf("La matrice risultante al round %d è:\n\n", round);
-    stampa(world,rows,cols);
+    //stampa(world,rows,cols);
     T_fine=MPI_Wtime()-T_inizio; // calcolo del tempo di fine
     printf("\nTempo calcolo locale: %lf\n", T_fine);
 
@@ -259,8 +260,8 @@ MPI_Bcast(&round,1,MPI_INT,0,MPI_COMM_WORLD);
         for(int i = 0; i < round; i++){
             next_round(world, rows, cols);
         }
-        printf("La matrice risultante al round %d è:\n\n", round);
-        stampa(world,rows,cols);
+        //printf("La matrice risultante al round %d è:\n\n", round);
+        //stampa(world,rows,cols);
         }
        
         MPI_Finalize (); // Disattiva MPI 
