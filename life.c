@@ -141,9 +141,6 @@ char *world, *localWorld;
 
 double T_inizio,T_fine,T_max;
 
-int id2D, colID, ndim=2;
-int coords1D[1], coords2D[2], dims[2], aij, alocal[3];  
-int belongs[2], periods[2], reorder;
 MPI_Comm comm2D, commrow;
  MPI_Status Stat[8];
 
@@ -162,20 +159,6 @@ MPI_Init(&argc, &argv);
 MPI_Comm_size (MPI_COMM_WORLD, &nproc);
 /*Da ad ogni processo il proprio numero identificativo*/
 MPI_Comm_rank (MPI_COMM_WORLD, &me);
-
-/* crea la topologia cartesiana 2D */
-dims[0] = nproc;		/* numero di righe */  
-dims[1] = 1;	/* numero di colonne */
-MPI_Cart_create(MPI_COMM_WORLD, ndim, dims, periods, reorder,  &comm2D);
-MPI_Comm_rank(comm2D, &id2D); 
-MPI_Cart_coords(comm2D, id2D, ndim, coords2D);
-
-/* Crea le sottogriglie di righe 1D */  
-belongs[0] = 0;
-belongs[1] = 1;
-MPI_Cart_sub(comm2D, belongs, &commrow);  
-MPI_Comm_rank(commrow, &colID);  
-MPI_Cart_coords(commrow, colID, 1, coords1D);
 
 /* la barrier assicura che tutti conoscano le proprie coordinate prima di assegnare aij*/
 MPI_Barrier(MPI_COMM_WORLD); 
@@ -212,7 +195,7 @@ if(me == 0)
     }
     
     // Alloco spazio di memoria
-    world = malloc(rows * cols * sizeof(char));
+    world = malloc(rows * cols * sizeof(char)); 
 
     for ( int i = 0 ; i< rows; i++){
         for (int j = 0; j< cols; j++){
@@ -237,11 +220,16 @@ if(nproc == 1){
         //printf("La matrice al round %d è:\n\n", i+1);
         //stampa(world,rows,cols);
     }
-
+    if(rows <= 20 && cols <=20){
     printf("La matrice risultante al round %d è:\n\n", round);
-    //stampa(world,rows,cols);
+    stampa(world,rows,cols);
+    }
     T_fine=MPI_Wtime()-T_inizio; // calcolo del tempo di fine
     printf("\nTempo calcolo locale: %lf\n", T_fine);
+
+    free(world);
+    free(sendcount);
+    free(displ);
 
     MPI_Finalize (); // Disattiva MPI 
     return 0;
