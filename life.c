@@ -3,6 +3,12 @@
 #include <mpi.h> 
 
 void seed_linea(char *world, int row, int cols, int start_rows, int start_cols){
+
+    for ( int i = 0 ; i< row; i++){
+        for (int j = 0; j< cols; j++){
+            world[i * cols +j] = 'd';
+        }
+    } 
     
     for(int i=start_cols; i<start_cols+3; i++){
     world[i + start_rows * cols] = 'a';
@@ -10,6 +16,13 @@ void seed_linea(char *world, int row, int cols, int start_rows, int start_cols){
 }
 
 void seed_glider(char *world, int row, int cols, int start_rows, int start_cols){
+
+    for ( int i = 0 ; i< row; i++){
+        for (int j = 0; j< cols; j++){
+            world[i * cols +j] = 'd';
+        }
+    } 
+
     world[start_cols + start_rows * cols] = 'a';
     world[ 1 + start_cols + (start_rows+1) * cols] = 'a';
     seed_linea(world, row, cols, start_rows+2, start_cols-1);
@@ -17,6 +30,13 @@ void seed_glider(char *world, int row, int cols, int start_rows, int start_cols)
 }
 
 void seed_forma(char *world, int row, int cols, int start_rows, int start_cols){
+
+    for ( int i = 0 ; i< row; i++){
+        for (int j = 0; j< cols; j++){
+            world[i * cols +j] = 'd';
+        }
+    } 
+    
     world[start_cols + start_rows * cols] = 'a';
     seed_linea(world, row, cols, start_rows+1, start_cols-1);
 }
@@ -196,12 +216,6 @@ if(me == 0)
     
     // Alloco spazio di memoria
     world = malloc(rows * cols * sizeof(char)); 
-
-    for ( int i = 0 ; i< rows; i++){
-        for (int j = 0; j< cols; j++){
-            world[i * cols +j] = 'd';
-        }
-    } 
 
     //seed_linea(world, rows, cols, 1, 1);
     //seed_glider(world, rows, cols, 1, 1);
