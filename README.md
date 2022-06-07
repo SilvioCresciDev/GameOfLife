@@ -14,7 +14,7 @@ Al fine di raggiungere tale scopo è stato utilizzato il protocollo MPI e nello 
 
 Nell'approccio utilizzato la matrice di gioco viene inizialmente rappresentata come un vettore per poi essere distribuita tra i vari processori per righe.
 
-Le dimensioni della matrice (righe e colonne) vengono specificate dall'utente, dopodiché il processore root la inizializzerà automaticamente con delle strutture note, cioè di cui già si conosce il comportamento con il passare delle generazioni. La matrice viene inizializzata automaticamente poiché ciò non impatta sulle prestazioni ma è servito solamente a verificare la correttezza dell'esecuzione. A questo punto il processore root suddivide la matrice per righe e la distribuisce tra tutti i processori, incluso se stesso. Se si ha a disposizione un solo processore ovviamente non si può parlare di parallelizzazione e il programma verrà eseguito in modo sequenziale. 
+Le dimensioni della matrice (righe e colonne) vengono specificate dall'utente, dopodiché il processore root la inizializzerà automaticamente con delle strutture note (di cui già si conosce il comportamento con il passare delle generazioni). La matrice viene inizializzata automaticamente poiché ciò non impatta sulle prestazioni ma serve solamente a verificare la correttezza dell'esecuzione. A questo punto il processore root suddivide la matrice per righe e la distribuisce tra tutti i processori, incluso se stesso. Se si ha a disposizione un solo processore ovviamente non si può parlare di parallelizzazione e il programma verrà eseguito in modo sequenziale. 
 
 La taglia locale (per ogni processore) del problema è data dalla divisione:  
 [(numero di righe / numero di processori) * numero di colonne]  
