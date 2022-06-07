@@ -169,10 +169,6 @@ for(int i = 0; i< 8; i++){
     request[i] = MPI_REQUEST_NULL;
 }
 
-int *displ = malloc (nproc * sizeof(int));
-int *sendcount = malloc(nproc * sizeof(int));
-
-
 /*Attiva MPI*/
 MPI_Init(&argc, &argv);
 /*Trova il numero totale dei processi*/
@@ -183,18 +179,24 @@ MPI_Comm_rank (MPI_COMM_WORLD, &me);
 /* la barrier assicura che tutti conoscano le proprie coordinate prima di assegnare aij*/
 MPI_Barrier(MPI_COMM_WORLD); 
 
+int *displ = malloc (nproc * sizeof(int));
+int *sendcount = malloc(nproc * sizeof(int));
+
 // Se sono la radice
 if(me == 0)
 {
-    printf("inserire numero di righe = \n"); 
+    printf("inserire numero di righe= \n"); 
     scanf("%d",&rows); 
     
-    printf("inserire numero di colonne = \n"); 
+    printf("inserire numero di colonne= \n"); 
     scanf("%d",&cols);
 
     printf("Inserisci numero di round:\n");
     scanf("%d",&round);
 
+    // Alloco spazio di memoria
+    world = malloc(rows * cols * sizeof(char)); 
+    
     // Numero di righe da processare
     local_rows = rows/nproc;
     int resto = rows%nproc;
@@ -213,15 +215,10 @@ if(me == 0)
 
         dist += sendcount[i];
     }
-    
-    // Alloco spazio di memoria
-    world = malloc(rows * cols * sizeof(char)); 
-
     //seed_linea(world, rows, cols, 1, 1);
     //seed_glider(world, rows, cols, 1, 1);
     seed_forma(world, rows, cols, 3, 3);
     if(rows <= 20 && cols <=20){
-    printf("\nLa matrice di partenza è: \n\n");
     stampa(world, rows, cols);
     }
 } // fine me==0
@@ -251,24 +248,31 @@ if(nproc == 1){
 //Il processore 0 comunica il numero di righe che ogni processore avrà
 MPI_Scatter(sendcount, 1, MPI_INT, &local_rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-// Spedisco m, n, local_m e v
+// Spedisco righe, colonne e numero di round
 MPI_Bcast(&rows,1,MPI_INT,0,MPI_COMM_WORLD);  
 MPI_Bcast(&cols,1,MPI_INT,0,MPI_COMM_WORLD);            
 MPI_Bcast(&round,1,MPI_INT,0,MPI_COMM_WORLD);
 
 //Sequenziale se dividendo la matrice di input non si hanno almeno due righe per processore
-    if (rows < nproc * 2){
-        if(me==0){
+if (rows < nproc * 2){
+    if(me==0){
         for(int i = 0; i < round; i++){
             next_round(world, rows, cols);
+            }
+
+        if(rows <= 20 && cols <=20){    
+            printf("La matrice risultante al round %d è:\n\n", round);
+            stampa(world,rows,cols);
         }
-        //printf("La matrice risultante al round %d è:\n\n", round);
-        //stampa(world,rows,cols);
-        }
-       
-        MPI_Finalize (); // Disattiva MPI 
-        return 0;
+
+        free(world);
+        free(sendcount);
+        free(displ);
     }
+
+    MPI_Finalize (); // Disattiva MPI 
+    return 0;
+}
 
 local_rows /= cols;
 
@@ -483,6 +487,7 @@ for(int r = 1; r <= round; r++){
         stampa (world, rows, cols);
     }
    */
+
 }
 
 // 0 raccoglie i risultati parziali
@@ -500,7 +505,6 @@ if(me == 0){
 //Libero la memoria
 free(localWorldTmp);
 free(localWorld);
-
 if(me != 0){
     free(firstRow);
     free(firstRowRecv);
@@ -523,7 +527,6 @@ if(me==0){
 }
 
 T_fine=MPI_Wtime()-T_inizio; // calcolo del tempo di fine
-
 if(me==0){
 
     printf("\nTempo calcolo locale: %lf\n", T_fine);
