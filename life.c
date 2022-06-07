@@ -317,6 +317,33 @@ if (me != 0 && me != nproc-1){
 //Inizio del ciclo per di comunicazione e computazione necessaria ad eseguire ogni round
 for(int r = 1; r <= round; r++){
     int count = 0;
+
+    //Salvo le seconde e penultime righe necessarie al calcolo
+    
+    if( me == 0 ){
+
+        for ( int i = 0; i < cols; i++ ){
+            rowBotToSave[i] = localWorld[(local_rows-2)*cols + i];
+        }
+
+    }else if(me == nproc-1){
+
+        for(int i = 0; i < cols; i++){
+            rowTopToSave[i] = localWorld[cols + i];
+        }
+
+    }else{
+
+        for ( int i = 0; i < cols; i++ ){
+            rowBotToSave[i] = localWorld[(local_rows-2)*cols + i];
+        }
+
+        for(int i = 0; i < cols; i++){
+            rowTopToSave[i] = localWorld[cols + i];
+        }
+    }
+
+
     //Invio della prima e ultima riga ai processori vicini
     if( me == 0 ){
         for(int i = 0 ; i<cols; i++){
@@ -357,36 +384,15 @@ for(int r = 1; r <= round; r++){
         MPI_Irecv(lastRowRecv,cols, MPI_CHAR, me+1, 0, MPI_COMM_WORLD, &request[count++]);
         
     }
+
+    first_next_round(me, nproc, localWorld, local_rows, cols);
+
+
     MPI_Waitall(count, request, Stat);
     
     //MPI_Barrier(MPI_COMM_WORLD);
 
-    //Salvo le seconde e penultime righe necessarie al calcolo
     
-    if( me == 0 ){
-
-        for ( int i = 0; i < cols; i++ ){
-            rowBotToSave[i] = localWorld[(local_rows-2)*cols + i];
-        }
-
-    }else if(me == nproc-1){
-
-        for(int i = 0; i < cols; i++){
-            rowTopToSave[i] = localWorld[cols + i];
-        }
-
-    }else{
-
-        for ( int i = 0; i < cols; i++ ){
-            rowBotToSave[i] = localWorld[(local_rows-2)*cols + i];
-        }
-
-        for(int i = 0; i < cols; i++){
-            rowTopToSave[i] = localWorld[cols + i];
-        }
-    }
-
-    first_next_round(me, nproc, localWorld, local_rows, cols);
 
     //I processori adesso formano quella che sarà la nuova matrice temporanea su cui eseguire i calcoli
     if(me == 0){
