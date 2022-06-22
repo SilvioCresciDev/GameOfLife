@@ -59,7 +59,7 @@ void stampa(char *world, int rows, int cols){
     printf("\n\n");
 }
 
-int get_count(char *world, int i_me, int j_me, int row, int cols){
+int get_count_neighbour(char *world, int i_me, int j_me, int row, int cols){
 
     int count=0;
     
@@ -93,7 +93,7 @@ void first_next_round(int me, int nproc, char *world, int rows, int cols){
     }
     for (int i=a; i<b; i++){
         for (int j=0; j< cols; j++){
-            local_count = get_count(world,i,j,rows,cols);
+            local_count = get_count_neighbour(world,i,j,rows,cols);
             
             //se la cella analizzata è alive
             if(world[j + i*cols] == 'a'){
@@ -125,7 +125,7 @@ void next_round(char *world, int rows, int cols){
 
     for (int i=0; i<rows; i++){
         for (int j=0; j< cols; j++){
-            local_count = get_count(world,i,j,rows,cols);
+            local_count = get_count_neighbour(world,i,j,rows,cols);
             
             //se la cella analizzata è alive
             if(world[j + i*cols] == 'a'){
@@ -255,6 +255,7 @@ MPI_Bcast(&round,1,MPI_INT,0,MPI_COMM_WORLD);
 
 //Sequenziale se dividendo la matrice di input non si hanno almeno due righe per processore
 if (rows < nproc * 2){
+    T_inizio=MPI_Wtime(); //inizio del cronometro per il calcolo del tempo di inizio
     if(me==0){
         for(int i = 0; i < round; i++){
             next_round(world, rows, cols);
@@ -264,6 +265,9 @@ if (rows < nproc * 2){
             printf("La matrice risultante al round %d è:\n\n", round);
             stampa(world,rows,cols);
         }
+
+    T_fine=MPI_Wtime()-T_inizio; // calcolo del tempo di fine
+    printf("\nTempo calcolo locale: %lf\n", T_fine);
 
         free(world);
         free(sendcount);
@@ -384,15 +388,12 @@ for(int r = 1; r <= round; r++){
         MPI_Irecv(lastRowRecv,cols, MPI_CHAR, me+1, 0, MPI_COMM_WORLD, &request[count++]);
         
     }
-
+    //Eseguo la computazione di tutte le righe per cui non servono quelle da ricevere
     first_next_round(me, nproc, localWorld, local_rows, cols);
-
 
     MPI_Waitall(count, request, Stat);
     
     //MPI_Barrier(MPI_COMM_WORLD);
-
-    
 
     //I processori adesso formano quella che sarà la nuova matrice temporanea su cui eseguire i calcoli
     if(me == 0){
