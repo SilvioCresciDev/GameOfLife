@@ -362,3 +362,81 @@ Nella seguente tabella sono riportati i risultati ottenuti variando il numero de
 | 2000*2000 |       13,65 |      6,86 | 1,99 | 0,99 |      6,07 | 2,23 | 0,56 |      4,13 | 3,31 | 0,55 |      3,11 | 4,39 | 0,55 |      2,70 | 5,06 | 0,51 |      2,63 | 5,19 | 0,43 |      2,38 | 5,74 | 0,41 |      2,37 | 5,76 | 0,36 |      2,22 | 6,15 | 0,34 |      2,03 |  6,72 | 0,34 |      1,99 |  6,86 | 0,31 |      2,01 |  6,79 | 0,28 |      2,18 |  6,26 | 0,24 |      2,33 |  5,86 | 0,21 |      2,53 |  5,40 | 0,18 |      2,78 | 4,91  | 0,15 |
 | 4000*4000 |       54,58 |     27,41 | 1,99 | 1,00 |     24,24 | 2,25 | 0,56 |     16,40 | 3,33 | 0,55 |     12,37 | 4,41 | 0,55 |     10,15 | 5,38 | 0,54 |      8,81 | 6,20 | 0,52 |      7,91 | 6,90 | 0,49 |      7,26 | 7,52 | 0,47 |      6,71 | 8,13 | 0,45 |      6,21 |  8,79 | 0,44 |      5,75 |  9,49 | 0,43 |      5,44 | 10,03 | 0,42 |      5,40 | 10,11 | 0,42 |      5,49 |  9,94 | 0,36 |      5,61 |  9,73 | 0,32 |      5,49 | 9,94  | 0,31 |
 | 8000*8000 |      221,08 |    109,77 | 2,00 | 1,00 |     97,96 | 2,26 | 0,56 |     66,68 | 3,32 | 0,55 |     49,04 | 4,51 | 0,56 |     39,61 | 5,58 | 0,56 |     33,83 | 6,54 | 0,54 |     29,14 | 7,59 | 0,54 |     25,96 | 8,52 | 0,53 |     23,35 | 9,47 | 0,53 |     21,77 | 10,16 | 0,51 |     20,65 | 10,71 | 0,49 |     18,33 | 12,06 | 0,50 |     18,00 | 12,28 | 0,47 |     17,95 | 12,32 | 0,44 |     16,83 | 13,14 | 0,44 |     16,38 | 13,50 | 0,42 |
+
+Di seguito sono riportati i grafici di Speedup ed Efficienza calcolati sulla scalabilità forte:
+
+![Speedup](/Assets/Scalabilità__forte_Speedup.png)
+
+![Efficienza](/Assets/Efficienza_scalabilità_forte.png)
+
+### Valutazioni scalabilità forte
+
+### Weak Scalability 
+
+La weak scalability è dominata dalla legge di Gustafson, essa mette in relazione la dimensione del problema con il numero di processori, infatti lo speedup ottenuto è detto anche scaled-speedup.
+
+### Speedup scalato = s + p x N = N( T(1,size) ) / T( N , N * size )
+
+Di seguito i risultati ottenuti variando la dimensione del problema (in termini di righe) in funzione del numero di processori.
+
+|            | 2000*1000 | 2000*2000 | 4000*2000 | 4000*4000 | 8000*4000 |
+|------------|-----------|-----------|-----------|-----------|-----------|
+| nproc      |     2     |     4     |     8     |     16    |     32    |
+| tempo      | 3,46      | 6,07      | 6,17      | 7,26      | 9,59      |
+| speedup    | 1,97      | 2,24      | 4,42      | 7,51      | 11,37     |
+| efficienza | 0,985     | 0,56      | 0,5525    | 0,469375  | 0,3553125 |
+
+Di seguito i risultati ottenuti variando la dimensione del problema (in termini di colonne) in funzione del numero di processori.
+
+|            | 1000*2000 | 2000*2000 | 2000*4000 | 4000*4000 | 4000*8000 |
+|------------|-----------|-----------|-----------|-----------|-----------|
+| nproc      |     2     |     4     |     8     |     16    |     32    |
+| tempo      | 3,47      | 6,07      | 6,23      | 7,26      | 10,03     |
+| speedup    | 1,96      | 2,24      | 4,37      | 7,51      | 10,88     |
+| efficienza | 0,98      | 0,56      | 0,54625   | 0,469375  | 0,34      |
+
+I risultati hanno evidenziato che non c'è una differenza sostanziale tra la variazione dando priorità alle righe che la variazione dando priorità alle colonne.
+
+
+Di seguito sono riportati i grafici di speedup ed efficienza.
+
+![Speedup](/Assets/Scalabilità_debole_speedup.png)
+
+![Efficienza](/Assets/Scalabilità_debole_Efficienza.png)
+
+### Valutazione scalabilità debole
+
+## Esecuzione
+
+Per il testing si è utilizzato il docker disponibile [qui](https://hub.docker.com/r/spagnuolocarmine/docker-mpi)
+
+Per la build del Docker:
+
+```
+docker run -it --name mpi --cap-add=SYS_PTRACE --mount type=bind,source="$(pwd)"/[percorso da montare],target=/mpi  spagnuolocarmine/docker-mpi
+```
+Per la compilazione eseguire il comando:
+
+```
+mpicc life.c -o life
+```
+
+Per l'esecuzione:
+
+```
+mpirun --allow-run-as-root -np [nProc] life
+```
+Per l'esecuzione c'è bisogno di impostare solo nProc, ovvero il numero di processori su cui vogliamo eseguire il programma. Esempio:
+
+```
+mpirun --allow-run-as-root -np 4 life
+```
+
+Nota: ti ricordo che il programma darà in output la matrice iniziale e finale soltanto se la dimensione non supera le 20 righe o le 20 colonne, altrimenti stamperà solo il tempo.
+
+## Conclusioni 
+
+Come dimostrano i grafici per lo speedup e l'efficienza in termini di scalabilità debole e forte evidenziano che il programma scala in modo abbastanza costante soprattutto se si parla delle matrici con dimensione maggiore.
+
+Il bilanciamento dei dati viene eseguito correttamente, ogni processore esegue la computazione su una sottomatrice della stessa dimenisone delle altre, eccezzion fatta per la presenza dell'eventuale resto fatta nella divisione iniziale che implica la presenza di al massimo una riga in più per alcuni processori.
+
