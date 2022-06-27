@@ -371,6 +371,10 @@ Di seguito sono riportati i grafici di Speedup ed Efficienza calcolati sulla sca
 
 ### Valutazioni scalabilità forte
 
+I risultati ottenuti valutano il comportamento dell'algoritmo in funzione dell'aumento del numero di processori, lasciando inalterato il carico.
+
+È possibile notare che per quanto riguarda lo speedup si verifica un crescendo di tale valore, soprattutto con la taglia del problema fissata a 8000*8000. Per taglie più piccole invece il valore dello speedup tende a stabilizzarsi o addirittura a decrescere, dovuto al fatto che i processori hanno meno computazione da poter effettuare senza la comunicazione. Per quanto riguarda invece l'efficienza abbiamo che questa è ottimale soltanto nel caso di due processori, dopodiché crolla a circa il 60% e inizia a decrescere lentamente.   
+
 ### Weak Scalability 
 
 La weak scalability è dominata dalla legge di Gustafson, essa mette in relazione la dimensione del problema con il numero di processori, infatti lo speedup ottenuto è detto anche scaled-speedup.
@@ -395,8 +399,6 @@ Di seguito i risultati ottenuti variando la dimensione del problema (in termini 
 | speedup    | 1,96      | 2,24      | 4,37      | 7,51      | 10,88     |
 | efficienza | 0,98      | 0,56      | 0,54625   | 0,469375  | 0,34      |
 
-I risultati hanno evidenziato che non c'è una differenza sostanziale tra la variazione dando priorità alle righe che la variazione dando priorità alle colonne.
-
 
 Di seguito sono riportati i grafici di speedup ed efficienza.
 
@@ -405,6 +407,15 @@ Di seguito sono riportati i grafici di speedup ed efficienza.
 ![Efficienza](/Assets/Scalabilità_debole_Efficienza.png)
 
 ### Valutazione scalabilità debole
+
+I risultati ottenuti valutano il comportamento dell'algoritmo in funzione dell'aumento del numero di processori, e scalando con esso il carico dei processori.
+
+Il carico da eseguire complessivo è stato incrementato sia nel numero di righe che nel numero di colonne dando però priorità prima all'una e poi all'altra in modo da poter valutare se c'è differenza in termini di performance dell'algoritmo.
+
+I risultati hanno evidenziato che non c'è una differenza sostanziale tra la variazione dando priorità alle righe che la variazione dando priorità alle colonne.
+
+In entrambi i casi, sia per quanto riguarda lo speedup e che l'efficienza è possibile notare che tali valori sono ottimali soltanto nel caso di due processori, dopodiché lo speedup continua ad aumentare anche se non al meglio, mentre l'efficienza diminuisce all'aumentare il numero dei processori e alla taglia del problema, cosa dovuta probabilmente all'aumentare della comunicazione tra i processori.
+
 
 ## Esecuzione
 
